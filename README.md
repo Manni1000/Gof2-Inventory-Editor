@@ -7,6 +7,8 @@ i will also add a cli and maby a gui but for now you have to open the script and
 for now the imput file has to be named gof2_save_game_4
 the preview save file with the same number has to exist but the data in it does not matter
 
+also this is for the pc version i might also make it work for mobile
+
 item structure:
 ![2023-02-23_05-16](https://user-images.githubusercontent.com/62727737/220820638-0e4d7bfe-f25a-426c-94fc-b5ac86af38ca.png)
 
