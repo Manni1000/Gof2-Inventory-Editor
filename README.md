@@ -1,23 +1,31 @@
 # Gof2-Inventory-Editor
-A work in progress python skript wher you can edit your item inventory
+A work in progress python skript / tool wher you can edit your item inventory
 
 
-i will also add a cli and maby a gui but for now you have to open the script and change the nubers of the items variable
+here is the first puplic gui version :D
 
-for now the imput file has to be named gof2_save_game_4
-the preview save file with the same number has to exist but the data in it does not matter
 
-also this is for the pc version i might also make it work for mobile
+![image](https://github.com/Manni1000/Gof2-Inventory-Editor/assets/62727737/22d938ce-409b-44ee-8d20-539fdca8eedc)
+
+soon i will make the code cleaner so addin new stuff gets easyer x.x
+
+also this is for the pc version but if you chage some stuff in the code (mainly the possision where the money value is stored) then it also works for mobile
+always make backups of your saves this tool might destroy your saves
+
+it may work on widows.
+if you want to have the item icons you have to create a folder caled images in it you shuld add every image from every item with the right names.
+
+
+
+
+
+
 
 item structure:
 ![2023-02-23_05-16](https://user-images.githubusercontent.com/62727737/220820638-0e4d7bfe-f25a-426c-94fc-b5ac86af38ca.png)
 
 also all the data is stored in little endian
 
-(i am not sure about the marker)
-marker = 5 bytes
-spacer = 26 bytes
-
 item_count = 4 bytes
 item_ID = 4 bytes
 item_count = 4 bytes
@@ -35,7 +43,3 @@ item_ID = 4 bytes
 item_count = 4 bytes
 item_cost =4 bytes
 spacer = 1 byte
-
-.....
-....
-...
