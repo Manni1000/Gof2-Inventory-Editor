@@ -1,0 +1,2 @@
+tqdm
+PyQt5
