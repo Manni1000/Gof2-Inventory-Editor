@@ -19,6 +19,9 @@ if you want to have the item icons you have to create a folder caled images in i
 
 
 
+install requierments:
+
+pip install -r requirements.txt
 
 
 item structure:
