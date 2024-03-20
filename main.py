@@ -4,7 +4,7 @@ import struct
 from tqdm import tqdm
 import copy
 
-from PyQt5.QtCore import Qt, QSize, QObject
+from PyQt5.QtCore import Qt, QSize, QObject, QDir
 from PyQt5.QtGui import QPixmap, QPalette
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QScrollArea,
                              QGridLayout, QLineEdit, QListWidget, QListWidgetItem, QHBoxLayout,
@@ -599,7 +599,8 @@ def update_save_button_color():
 def on_savefolderbutton_clicked():
     global folder_path
     # Replace this comment with the code from the second box
-    folder_path = QFileDialog.getExistingDirectory(None, "Select Save Folder")
+    qt_path = QFileDialog.getExistingDirectory(None, "Select Save Folder")
+    folder_path = QDir.toNativeSeparators(qt_path)
     if folder_path:
         nonSaveNames = ["preview", "GoF2.ini", "options"]
         gameSaveNames = []
