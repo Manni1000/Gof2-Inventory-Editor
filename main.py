@@ -218,7 +218,7 @@ def create_money_box():
 def load_image(item_name, folder_path="images"):
     img_path = os.path.join(folder_path, item_name.lower() + ".png")
     pixmap = QPixmap(img_path)
-    return pixmap.scaled(50, 50, Qt.KeepAspectRatio)
+    return pixmap.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
 
 def on_delete_button_clicked():
     button = app.sender()
@@ -256,7 +256,7 @@ def create_item_widget(item_name, item_count=None):
     item_widget = QWidget()
     item_widget.setFixedHeight(50)
     grid = QGridLayout(item_widget)
-    grid.setAlignment(Qt.AlignTop)
+    grid.setAlignment(Qt.Alignment.AlignTop)
 
     item_image_label = QLabel()
     item_image_label.setPixmap(load_image(item_name))
@@ -418,8 +418,8 @@ left_group_box.setLayout(left_layout)
 # Right side layout
 inventory_scroll_area = QScrollArea(main_window)
 inventory_scroll_area.setWidgetResizable(True)
-inventory_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-inventory_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+inventory_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+inventory_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
 inventory_widget = QWidget()
 inventory_scroll_area.setWidget(inventory_widget)
@@ -431,7 +431,7 @@ inventory_layout = QVBoxLayout(inventory_widget)
 inventory_layout.addWidget(item_widget)
 
 
-inventory_layout.setAlignment(Qt.AlignTop)
+inventory_layout.setAlignment(Qt.Alignment.AlignTop)
 
 refresh_inventory()
 
