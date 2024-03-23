@@ -28,7 +28,7 @@ DEFAULT_SAVES_FOLDERS = {
 }
 
 DEFAULT_INSTALLATION_FOLDERS = {
-    "nt": os.path.expandvars("%ProgramFiles(x86)%\\Steam\\steamapps\\common\\Galaxy On Fire 2 HD")
+    # "nt": os.path.expandvars("%ProgramFiles(x86)%\\Steam\\steamapps\\common\\Galaxy On Fire 2 HD")
 }
 
 
@@ -276,9 +276,6 @@ def on_delete_button_clicked():
 
         refresh_inventory()
 
-def get_item_icon(item_id):
-    return 
-
 def create_item_widget(item_id, item_name, item_count=None):
     item_widget = QWidget()
     item_widget.setFixedHeight(50)
@@ -356,9 +353,7 @@ def add_item_to_inventory(item_name):
     refresh_inventory()
 
 def refresh_inventory():
-    global inventory_layout, saveloaded
-    if not saveloaded:
-        return
+    global inventory_layout
     for i in reversed(range(inventory_layout.count())):
         inventory_layout.itemAt(i).widget().setParent(None)
 
@@ -368,13 +363,7 @@ def refresh_inventory():
 
     print(initial_money)
 
-    for i, (item_id, item_count, price) in enumerate(items):
-        if item_id in itemdb:
-            item_name = itemdb[item_id]
-            item_widget = create_item_widget(item_id, item_name, item_count)
-
-            item_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-            inventory_layout.addWidget(item_widget)
+    refresh_itemdb_list("")
 
 
     # Print the items list in the console
@@ -397,26 +386,20 @@ left_layout.addWidget(left_list)
 
 item_icons = []
 
-for item_id, item_name in itemdb.items():
-    list_item = QListWidgetItem()
-    list_item.setSizeHint(QSize(200, 50))
-    item_widget = create_item_widget(item_id, item_name)
-    left_list.addItem(list_item)
-    left_list.setItemWidget(list_item, item_widget)
-
-def on_search_field_text_changed(text):
+def refresh_itemdb_list(searchText):
     left_list.clear()
     for icon in item_icons:
         icon.close()
     for item_id, item_name in itemdb.items():
-        if text.lower() in item_name.lower():
+        if not searchText or searchText.lower() in item_name.lower():
             list_item = QListWidgetItem()
             list_item.setSizeHint(QSize(200, 50))
             item_widget = create_item_widget(item_id, item_name)
             left_list.addItem(list_item)
             left_list.setItemWidget(list_item, item_widget)
 
-search_field.textChanged.connect(on_search_field_text_changed)
+refresh_itemdb_list("")
+search_field.textChanged.connect(refresh_itemdb_list)
 
 def on_left_list_item_clicked(item):
     item_widget = left_list.itemWidget(item)
@@ -459,7 +442,6 @@ inventory_scroll_area.setWidget(inventory_widget)
 #inventory_layout = QVBoxLayout(inventory_widget)
 inventory_layout = QVBoxLayout(inventory_widget)
 
-inventory_layout.addWidget(item_widget)
 
 
 inventory_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -560,7 +542,10 @@ def on_save_button_clicked():
         save_item_data(file_in = save_path, items=list(items))
         save_money_amount(file_in = save_path, new_money_amount = initial_money)
     else:
-        print("Cannot save items. Please load a valid save file and enter the number of loose items.")
+        error_box = QMessageBox()
+        error_box.setWindowTitle("Cannot save items")
+        error_box.setText("Please load a valid save file and enter the number of loose items.")
+        error_box.exec()
 
 def on_load_save_button_clicked():
     global saveloaded, save_path, num_loose_items, folder_path, items, initial_money, items
@@ -585,7 +570,10 @@ def on_load_save_button_clicked():
         saveloaded = True
         refresh_inventory()
     else:
-        print("Cannot load save. Please select a valid save file and enter the number of loose items.")
+        error_box = QMessageBox()
+        error_box.setWindowTitle("Cannot load save")
+        error_box.setText("Please load a valid save file and enter the number of loose items.")
+        error_box.exec()
 
 #Create the "loadSave" button adn add it to the layout
 load_save_button = QPushButton("Load Save")
@@ -601,13 +589,13 @@ def on_load_assets_button_clicked():
     error_box.setWindowTitle("Invalid GOF2 Installation")
     if not os.path.isdir(installation_path):
         error_box.setText("The directory does not exist.")
-        error_box.show()
+        error_box.exec()
         return
     try:
         new_installation = Gof2Installation(installation_path)
     except Exception as ex:
         error_box.setText(f"{type(ex)}: {ex}")
-        error_box.show()
+        error_box.exec()
         return
     if gof2_installation:
         gof2_installation.close()
