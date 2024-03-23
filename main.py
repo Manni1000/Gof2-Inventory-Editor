@@ -353,7 +353,9 @@ def add_item_to_inventory(item_name):
     refresh_inventory()
 
 def refresh_inventory():
-    global inventory_layout
+    global inventory_layout, saveloaded
+    if not saveloaded:
+        return
     for i in reversed(range(inventory_layout.count())):
         inventory_layout.itemAt(i).widget().setParent(None)
 
