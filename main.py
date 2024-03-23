@@ -28,7 +28,7 @@ DEFAULT_SAVES_FOLDERS = {
 }
 
 DEFAULT_INSTALLATION_FOLDERS = {
-    # "nt": os.path.expandvars("%ProgramFiles(x86)%\\Steam\\steamapps\\common\\Galaxy On Fire 2 HD")
+    "nt": os.path.expandvars("%ProgramFiles(x86)%\\Steam\\steamapps\\common\\Galaxy On Fire 2 HD")
 }
 
 
