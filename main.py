@@ -602,6 +602,7 @@ def on_load_assets_button_clicked():
     if gof2_installation:
         gof2_installation.close()
     gof2_installation = new_installation
+    refresh_itemdb_list("")
     refresh_inventory()
 
 #Create the "loadAssets" button and add it to the layout
