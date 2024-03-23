@@ -124,7 +124,7 @@ class Gof2Installation:
         :raises KeyError: If `resolution` does not exist in the installation
         """
         if resolution is None:
-            resolution = max(self._item_icon_resolutions.keys(), key=lambda r: r.value, default=None)
+            resolution = max((r for r, t in self._item_icon_resolutions.items() if t), key=lambda r: r.value, default=None)
             if resolution is None:
                 raise ValueError("No item icons AEIs were found in the installation")
 
