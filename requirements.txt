@@ -1,2 +1,3 @@
 tqdm
-PyQt5
+PyQt6
+aepi

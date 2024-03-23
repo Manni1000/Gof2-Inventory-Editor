@@ -3,16 +3,19 @@ import os
 import struct
 from tqdm import tqdm
 import copy
+from PIL import ImageQt
 
-from PyQt5.QtCore import Qt, QSize, QObject
-from PyQt5.QtGui import QPixmap, QPalette
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QScrollArea,
+from PyQt6.QtCore import Qt, QSize, QObject, QDir
+from PyQt6.QtGui import QPixmap, QPalette
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QScrollArea,
                              QGridLayout, QLineEdit, QListWidget, QListWidgetItem, QHBoxLayout,
                              QFrame, QPushButton, QGroupBox, QSpinBox, QDoubleSpinBox, QStackedWidget,
                              QGraphicsOpacityEffect, QAbstractSpinBox, QMessageBox, QDialog,
                              QSizePolicy, QCheckBox, QInputDialog, QComboBox, QFileDialog,
                              QLineEdit, QSpinBox)
-from PyQt5.QtWidgets import QTabWidget
+from PyQt6.QtWidgets import QTabWidget
+
+from gof2Installation import Gof2Installation
 
 
 from itemdb import itemdb
@@ -20,6 +23,13 @@ from itemdb import itemdb
 items = []
 saveloaded = False
 
+DEFAULT_SAVES_FOLDERS = {
+    "nt": os.path.expandvars("%USERPROFILE%\\AppData\\Roaming\\Galaxy on Fire 2 Full HD")
+}
+
+DEFAULT_INSTALLATION_FOLDERS = {
+    "nt": os.path.expandvars("%ProgramFiles(x86)%\\Steam\\steamapps\\common\\Galaxy On Fire 2 HD")
+}
 
 
 ###################
@@ -139,6 +149,17 @@ def save_item_data(file_in, items):
 # gui code
 #################
 
+folder_path = DEFAULT_SAVES_FOLDERS.get(os.name, None)
+if folder_path and not os.path.isdir(folder_path):
+    folder_path = None
+
+default_installation_path = DEFAULT_INSTALLATION_FOLDERS.get(os.name, None)
+if default_installation_path and not os.path.isdir(default_installation_path):
+    default_installation_path = None
+
+gof2_installation = (None if default_installation_path is None
+                     else Gof2Installation(default_installation_path))
+
 app = QApplication(sys.argv)
 main_window = QMainWindow()
 main_window.setWindowTitle("Inventory Editor")
@@ -168,7 +189,7 @@ select_save_file_button.clicked.connect(on_select_save_file_button_clicked)
 def create_money_box():
     global money_display_label, money_spinbox
     frame = QFrame()
-    frame.setFrameShape(QFrame.StyledPanel)
+    frame.setFrameShape(QFrame.Shape.StyledPanel)
     frame.setLineWidth(2)
 
     # Set the yellow border for the frame
@@ -186,7 +207,7 @@ def create_money_box():
     money_stacked_widget.addWidget(money_display_label)
 
     money_spinbox = QDoubleSpinBox()
-    money_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+    money_spinbox.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
     money_spinbox.setPrefix("$")
     money_spinbox.setRange(0, 1e12)
     money_spinbox.setValue(initial_money)
@@ -215,10 +236,13 @@ def create_money_box():
     return frame
 
 
-def load_image(item_name, folder_path="images"):
-    img_path = os.path.join(folder_path, item_name.lower() + ".png")
-    pixmap = QPixmap(img_path)
-    return pixmap.scaled(50, 50, Qt.KeepAspectRatio)
+def load_image(item_id):
+    if gof2_installation is None:
+        pixmap = QPixmap()
+    else:
+        texture = gof2_installation.item_icons().get_image(item_id)
+        pixmap = ImageQt.toqpixmap(texture)
+    return pixmap.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
 
 def on_delete_button_clicked():
     button = app.sender()
@@ -227,18 +251,18 @@ def on_delete_button_clicked():
     item_name = layout_item.widget().text()
 
     msg_box = QMessageBox()
-    msg_box.setIcon(QMessageBox.Question)
+    msg_box.setIcon(QMessageBox.Icon.Question)
     msg_box.setWindowTitle("Confirm Remove")
     msg_box.setText(f"Are you sure you want to remove {item_name} from your inventory?")
 
     remove_all_checkbox = QCheckBox("Remove all items")
     msg_box.setCheckBox(remove_all_checkbox)
 
-    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-    msg_box.setDefaultButton(QMessageBox.No)
-    button_pressed = msg_box.exec_()
+    msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    msg_box.setDefaultButton(QMessageBox.StandardButton.No)
+    button_pressed = msg_box.exec()
 
-    if button_pressed == QMessageBox.Yes:
+    if button_pressed == QMessageBox.StandardButton.Yes:
         global items
         item_id = [key for key, value in itemdb.items() if value == item_name][0]
 
@@ -252,14 +276,14 @@ def on_delete_button_clicked():
 
         refresh_inventory()
 
-def create_item_widget(item_name, item_count=None):
+def create_item_widget(item_id, item_name, item_count=None):
     item_widget = QWidget()
     item_widget.setFixedHeight(50)
     grid = QGridLayout(item_widget)
-    grid.setAlignment(Qt.AlignTop)
+    grid.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     item_image_label = QLabel()
-    item_image_label.setPixmap(load_image(item_name))
+    item_image_label.setPixmap(load_image(item_id))
     grid.addWidget(item_image_label, 0, 0)
 
     item_name_label = QLabel(item_name)
@@ -273,7 +297,7 @@ def create_item_widget(item_name, item_count=None):
         count_stacked_widget.addWidget(item_count_label)
 
         count_spinbox = QSpinBox()
-        count_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        count_spinbox.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
         count_spinbox.setRange(0, 999)
         count_spinbox.setValue(item_count)
         count_stacked_widget.addWidget(count_spinbox)
@@ -341,13 +365,7 @@ def refresh_inventory():
 
     print(initial_money)
 
-    for i, (item_id, item_count, price) in enumerate(items):
-        if item_id in itemdb:
-            item_name = itemdb[item_id]
-            item_widget = create_item_widget(item_name, item_count)
-
-            item_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            inventory_layout.addWidget(item_widget)
+    refresh_itemdb_list("")
 
 
     # Print the items list in the console
@@ -368,24 +386,22 @@ left_layout.addWidget(search_field)
 left_list = QListWidget()
 left_layout.addWidget(left_list)
 
-for item_name in itemdb.values():
-    list_item = QListWidgetItem()
-    list_item.setSizeHint(QSize(200, 50))
-    item_widget = create_item_widget(item_name)
-    left_list.addItem(list_item)
-    left_list.setItemWidget(list_item, item_widget)
+item_icons = []
 
-def on_search_field_text_changed(text):
+def refresh_itemdb_list(searchText):
     left_list.clear()
-    for item_name in itemdb.values():
-        if text.lower() in item_name.lower():
+    for icon in item_icons:
+        icon.close()
+    for item_id, item_name in itemdb.items():
+        if not searchText or searchText.lower() in item_name.lower():
             list_item = QListWidgetItem()
             list_item.setSizeHint(QSize(200, 50))
-            item_widget = create_item_widget(item_name)
+            item_widget = create_item_widget(item_id, item_name)
             left_list.addItem(list_item)
             left_list.setItemWidget(list_item, item_widget)
 
-search_field.textChanged.connect(on_search_field_text_changed)
+refresh_itemdb_list("")
+search_field.textChanged.connect(refresh_itemdb_list)
 
 def on_left_list_item_clicked(item):
     item_widget = left_list.itemWidget(item)
@@ -418,8 +434,8 @@ left_group_box.setLayout(left_layout)
 # Right side layout
 inventory_scroll_area = QScrollArea(main_window)
 inventory_scroll_area.setWidgetResizable(True)
-inventory_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-inventory_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+inventory_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+inventory_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
 inventory_widget = QWidget()
 inventory_scroll_area.setWidget(inventory_widget)
@@ -428,10 +444,9 @@ inventory_scroll_area.setWidget(inventory_widget)
 #inventory_layout = QVBoxLayout(inventory_widget)
 inventory_layout = QVBoxLayout(inventory_widget)
 
-inventory_layout.addWidget(item_widget)
 
 
-inventory_layout.setAlignment(Qt.AlignTop)
+inventory_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
 refresh_inventory()
 
@@ -481,11 +496,15 @@ tab1_layout.addWidget(standardInvEdit)
 #select folder stuff
 saveLoadIsPossible = False
 # Import additional classes
-from PyQt5.QtWidgets import QComboBox, QFileDialog, QLineEdit, QSpinBox
+from PyQt6.QtWidgets import QComboBox, QFileDialog, QLineEdit, QSpinBox
 
 # Create the "saveselectorbox"
 saveselectorbox = QGroupBox("")
 saveselector_layout = QHBoxLayout(saveselectorbox)
+
+# Create the "installationFolderButton" and add it to the layout
+installationFolderButton = QPushButton("Select GOF2 Installation")
+saveselector_layout.addWidget(installationFolderButton)
 
 # Create the "savefolderbutton" and add it to the layout
 savefolderbutton = QPushButton("Select Save Folder")
@@ -501,6 +520,20 @@ loseitemsnumber.setRange(0, 1000)
 loseitemsnumber.setSuffix(" Loose Items")
 saveselector_layout.addWidget(loseitemsnumber)
 
+def refresh_save_files():
+    if folder_path:
+        nonSaveNames = ["preview", "GoF2.ini", "options"]
+        gameSaveNames = []
+
+        for file in os.listdir(folder_path):
+            if not any(word in file for word in nonSaveNames):
+                gameSaveNames.append(file)
+
+        savedropdownselector.clear()
+        savedropdownselector.addItems(gameSaveNames)
+
+if folder_path:
+    refresh_save_files()
 
 def on_save_button_clicked():
     global saveloaded, save_path, items, initial_money
@@ -511,7 +544,10 @@ def on_save_button_clicked():
         save_item_data(file_in = save_path, items=list(items))
         save_money_amount(file_in = save_path, new_money_amount = initial_money)
     else:
-        print("Cannot save items. Please load a valid save file and enter the number of loose items.")
+        error_box = QMessageBox()
+        error_box.setWindowTitle("Cannot save items")
+        error_box.setText("Please load a valid save file and enter the number of loose items.")
+        error_box.exec()
 
 def on_load_save_button_clicked():
     global saveloaded, save_path, num_loose_items, folder_path, items, initial_money, items
@@ -536,13 +572,40 @@ def on_load_save_button_clicked():
         saveloaded = True
         refresh_inventory()
     else:
-        print("Cannot load save. Please select a valid save file and enter the number of loose items.")
+        error_box = QMessageBox()
+        error_box.setWindowTitle("Cannot load save")
+        error_box.setText("Please load a valid save file and enter the number of loose items.")
+        error_box.exec()
 
 #Create the "loadSave" button adn add it to the layout
 load_save_button = QPushButton("Load Save")
 load_save_button.setStyleSheet("background-color: yellow; color: black")
 load_save_button.clicked.connect(on_load_save_button_clicked)
 saveselector_layout.addWidget(load_save_button)
+
+def on_load_assets_button_clicked():
+    global gof2_installation
+    qt_path = QFileDialog.getExistingDirectory(None, "Select GOF2 Installation Folder", default_installation_path)
+    installation_path = QDir.toNativeSeparators(qt_path)
+    error_box = QMessageBox()
+    error_box.setWindowTitle("Invalid GOF2 Installation")
+    if not os.path.isdir(installation_path):
+        error_box.setText("The directory does not exist.")
+        error_box.exec()
+        return
+    try:
+        new_installation = Gof2Installation(installation_path)
+    except Exception as ex:
+        error_box.setText(f"{type(ex)}: {ex}")
+        error_box.exec()
+        return
+    if gof2_installation:
+        gof2_installation.close()
+    gof2_installation = new_installation
+    refresh_inventory()
+
+#Create the "loadAssets" button and add it to the layout
+installationFolderButton.clicked.connect(on_load_assets_button_clicked)
 
 def update_retry_selector(item_data_positions):
     retry_selector.clear()
@@ -599,17 +662,9 @@ def update_save_button_color():
 def on_savefolderbutton_clicked():
     global folder_path
     # Replace this comment with the code from the second box
-    folder_path = QFileDialog.getExistingDirectory(None, "Select Save Folder")
-    if folder_path:
-        nonSaveNames = ["preview", "GoF2.ini", "options"]
-        gameSaveNames = []
-
-        for file in os.listdir(folder_path):
-            if not any(word in file for word in nonSaveNames):
-                gameSaveNames.append(file)
-
-        savedropdownselector.clear()
-        savedropdownselector.addItems(gameSaveNames)
+    qt_path = QFileDialog.getExistingDirectory(None, "Select Save Folder")
+    folder_path = QDir.toNativeSeparators(qt_path)
+    refresh_save_files()
 
 savefolderbutton.clicked.connect(on_savefolderbutton_clicked)
 
@@ -632,6 +687,10 @@ main_layout.addWidget(tab_widget)
 central_widget.setLayout(main_layout)
 
 main_window.show()
-sys.exit(app.exec_())
 
+exit_code = app.exec()
 
+if gof2_installation:
+    gof2_installation.close()
+
+sys.exit(exit_code)

@@ -13,7 +13,7 @@ also this is for the pc version but if you chage some stuff in the code (mainly 
 always make backups of your saves this tool might destroy your saves
 
 it may work on widows.
-if you want to have the item icons you have to create a folder caled images in it you shuld add every image from every item with the right names.
+The tool can optionally show item icons from your GOF2 installation. Make sure to load your installation with the button.
 
 
 
