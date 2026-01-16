@@ -238,10 +238,14 @@ def create_money_box():
 
 def load_image(item_id):
     if gof2_installation is None:
-        pixmap = QPixmap()
-    else:
+        return QPixmap()
+    try:
         texture = gof2_installation.item_icons().get_image(item_id)
-        pixmap = ImageQt.toqpixmap(texture)
+    except Exception as ex:
+        print(f"Failed to load item icon for item {item_id}: {ex}")
+        return QPixmap()
+    
+    pixmap = ImageQt.toqpixmap(texture)
     return pixmap.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
 
 def on_delete_button_clicked():
@@ -602,6 +606,7 @@ def on_load_assets_button_clicked():
     if gof2_installation:
         gof2_installation.close()
     gof2_installation = new_installation
+    refresh_itemdb_list("")
     refresh_inventory()
 
 #Create the "loadAssets" button and add it to the layout
